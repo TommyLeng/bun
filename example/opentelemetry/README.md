@@ -1,7 +1,7 @@
 # Example for Bun's OpenTelemetry instrumentation
 
 This example demonstrates how to monitor Bun SQL client using OpenTelemetry and
-[Uptrace](https://github.com/uptrace/uptrace). It requires Docker to start PostgreSQL and Uptrace.
+[Uptrace](https://github.com/TommyLeng/uptrace). It requires Docker to start PostgreSQL and Uptrace.
 
 See
 [SQL performance and errors monitoring](https://bun.uptrace.dev/guide/performance-monitoring.html)
@@ -10,7 +10,7 @@ for details.
 **Step 1**. Download the example using Git:
 
 ```shell
-git clone https://github.com/uptrace/bun.git
+git clone https://github.com/TommyLeng/bun.git
 cd example/opentelemetry
 ```
 

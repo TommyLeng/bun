@@ -1,26 +1,26 @@
-module github.com/uptrace/bun/example/opentelemetry
+module github.com/TommyLeng/bun/example/opentelemetry
 
 go 1.18
 
-replace github.com/uptrace/bun => ../..
+replace github.com/TommyLeng/bun => ../..
 
-replace github.com/uptrace/bun/dbfixture => ../../dbfixture
+replace github.com/TommyLeng/bun/dbfixture => ../../dbfixture
 
-replace github.com/uptrace/bun/extra/bundebug => ../../extra/bundebug
+replace github.com/TommyLeng/bun/extra/bundebug => ../../extra/bundebug
 
-replace github.com/uptrace/bun/extra/bunotel => ../../extra/bunotel
+replace github.com/TommyLeng/bun/extra/bunotel => ../../extra/bunotel
 
-replace github.com/uptrace/bun/dialect/pgdialect => ../../dialect/pgdialect
+replace github.com/TommyLeng/bun/dialect/pgdialect => ../../dialect/pgdialect
 
-replace github.com/uptrace/bun/driver/pgdriver => ../../driver/pgdriver
+replace github.com/TommyLeng/bun/driver/pgdriver => ../../driver/pgdriver
 
 require (
 	github.com/brianvoe/gofakeit/v5 v5.11.2
-	github.com/uptrace/bun v1.1.12
-	github.com/uptrace/bun/dialect/pgdialect v1.1.12
-	github.com/uptrace/bun/driver/pgdriver v1.1.12
-	github.com/uptrace/bun/extra/bunotel v1.1.12
-	github.com/uptrace/uptrace-go v1.13.0
+	github.com/TommyLeng/bun v1.1.12
+	github.com/TommyLeng/bun/dialect/pgdialect v1.1.12
+	github.com/TommyLeng/bun/driver/pgdriver v1.1.12
+	github.com/TommyLeng/bun/extra/bunotel v1.1.12
+	github.com/TommyLeng/uptrace-go v1.13.0
 	go.opentelemetry.io/otel v1.13.0
 )
 
@@ -32,7 +32,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
-	github.com/uptrace/opentelemetry-go-extra/otelsql v0.1.21 // indirect
+	github.com/TommyLeng/opentelemetry-go-extra/otelsql v0.1.21 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.39.0 // indirect
