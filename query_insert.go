@@ -22,6 +22,7 @@ type InsertQuery struct {
 
 	ignore  bool
 	replace bool
+	queryBytes int32
 }
 
 var _ Query = (*InsertQuery)(nil)
@@ -157,6 +158,11 @@ func (q *InsertQuery) Ignore() *InsertQuery {
 // Replaces generates a `REPLACE INTO` query (MySQL and MariaDB).
 func (q *InsertQuery) Replace() *InsertQuery {
 	q.replace = true
+	return q
+}
+
+func (q *InsertQuery) SetQueryBytes(size int32) *InsertQuery {
+	q.queryBytes = size
 	return q
 }
 
@@ -570,7 +576,13 @@ func (q *InsertQuery) scanOrExec(
 	}
 
 	// Generate the query before checking hasReturning.
-	queryBytes, err := q.AppendQuery(q.db.fmter, q.db.makeQueryBytes())
+	var bs []byte
+	if q.queryBytes > 0 {
+		bs = make([]byte, 0, q.queryBytes)
+	} else {
+		bs = q.db.makeQueryBytes()
+	}
+	queryBytes, err := q.AppendQuery(q.db.fmter, bs)
 	if err != nil {
 		return nil, err
 	}
