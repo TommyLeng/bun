@@ -11,6 +11,8 @@ import (
 
 type DropColumnQuery struct {
 	baseQuery
+
+	ifExists bool
 }
 
 var _ Query = (*DropColumnQuery)(nil)
@@ -80,6 +82,11 @@ func (q *DropColumnQuery) ColumnExpr(query string, args ...interface{}) *DropCol
 	return q
 }
 
+func (q *DropColumnQuery) IfExists() *DropColumnQuery {
+	q.ifExists = true
+	return q
+}
+
 //------------------------------------------------------------------------------
 
 func (q *DropColumnQuery) Operation() string {
@@ -102,6 +109,9 @@ func (q *DropColumnQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byt
 	}
 
 	b = append(b, " DROP COLUMN "...)
+	if q.ifExists {
+		b = append(b, "IF EXISTS "...)
+	}
 
 	b, err = q.columns[0].AppendQuery(fmter, b)
 	if err != nil {
