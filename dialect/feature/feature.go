@@ -32,4 +32,5 @@ const (
 	MSSavepoint
 	GeneratedIdentity
 	CompositeIn // ... WHERE (A,B) IN ((N, NN), (N, NN)...)
+	MSDropIndex
 )

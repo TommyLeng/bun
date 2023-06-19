@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/TommyLeng/bun/dialect/feature"
 	"github.com/TommyLeng/bun/internal"
 	"github.com/TommyLeng/bun/schema"
 )
@@ -67,7 +68,12 @@ func (q *DropIndexQuery) Restrict() *DropIndexQuery {
 	return q
 }
 
-func (q *DropIndexQuery) Index(query string, args ...interface{}) *DropIndexQuery {
+func (q *DropIndexQuery) Index(query string) *DropIndexQuery {
+	q.index = schema.UnsafeIdent(query)
+	return q
+}
+
+func (q *DropIndexQuery) IndexExpr(query string, args ...interface{}) *DropIndexQuery {
 	q.index = schema.SafeQuery(query, args)
 	return q
 }
@@ -95,6 +101,13 @@ func (q *DropIndexQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte
 	b, err = q.index.AppendQuery(fmter, b)
 	if err != nil {
 		return nil, err
+	}
+	if fmter.Dialect().Features().Has(feature.MSDropIndex) {
+		b = append(b, " ON "...)
+		b, err = q.appendFirstTable(fmter, b)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	b = q.appendCascade(fmter, b)
