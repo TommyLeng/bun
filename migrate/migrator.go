@@ -205,9 +205,11 @@ func (m *Migrator) Rollback(ctx context.Context, opts ...MigrationOption) (*Migr
 		return nil, err
 	}
 
+	lastGroup := migrations.LastGroup()
+
 	if cfg.targetVersion != "" {
 		versionValid := false
-		for _, m := range migrations {
+		for _, m := range lastGroup.Migrations {
 			if m.Name == cfg.targetVersion {
 				versionValid = true
 				break
@@ -217,8 +219,6 @@ func (m *Migrator) Rollback(ctx context.Context, opts ...MigrationOption) (*Migr
 			return nil, fmt.Errorf("version not found")
 		}
 	}
-
-	lastGroup := migrations.LastGroup()
 
 	for i := len(lastGroup.Migrations) - 1; i >= 0; i-- {
 		migration := &lastGroup.Migrations[i]
