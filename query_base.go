@@ -581,6 +581,41 @@ func (q *baseQuery) scan(
 	return res, err
 }
 
+
+func (q *baseQuery) scanSp(
+	ctx context.Context,
+	iquery Query,
+	query string,
+	args []interface{},
+	model Model,
+	hasDest bool,
+) (sql.Result, error) {
+	ctx, event := q.db.beforeQuery(ctx, iquery, query, nil, query, q.model)
+
+	rows, err := q.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		q.db.afterQuery(ctx, event, nil, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	numRow, err := model.ScanRows(ctx, rows)
+	if err != nil {
+		q.db.afterQuery(ctx, event, nil, err)
+		return nil, err
+	}
+
+	if numRow == 0 && hasDest && isSingleRowModel(model) {
+		err = sql.ErrNoRows
+	}
+
+	res := driver.RowsAffected(numRow)
+	q.db.afterQuery(ctx, event, res, err)
+
+	return res, err
+}
+
+
 func (q *baseQuery) exec(
 	ctx context.Context,
 	iquery Query,

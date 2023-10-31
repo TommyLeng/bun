@@ -12,6 +12,7 @@ type RawQuery struct {
 
 	query string
 	args  []interface{}
+	IsSP  bool
 }
 
 // Deprecated: Use NewRaw instead. When add it to IDB, it conflicts with the sql.Conn#Raw
@@ -47,6 +48,11 @@ func (q *RawQuery) Err(err error) *RawQuery {
 	return q
 }
 
+func (q *RawQuery) SetSP() *RawQuery {
+	q.IsSP = true
+	return q
+}
+
 func (q *RawQuery) Exec(ctx context.Context, dest ...interface{}) (sql.Result, error) {
 	return q.scanOrExec(ctx, dest, len(dest) > 0)
 }
@@ -73,13 +79,17 @@ func (q *RawQuery) scanOrExec(
 		}
 	}
 
-	query := q.db.format(q.query, q.args)
 	var res sql.Result
 
-	if hasDest {
-		res, err = q.scan(ctx, q, query, model, hasDest)
+	if q.IsSP {
+		res, err = q.scanSp(ctx, q, q.query, q.args, model, hasDest)
 	} else {
-		res, err = q.exec(ctx, q, query)
+		query := q.db.format(q.query, q.args)
+		if hasDest {
+			res, err = q.scan(ctx, q, query, model, hasDest)
+		} else {
+			res, err = q.exec(ctx, q, query)
+		}
 	}
 
 	if err != nil {
