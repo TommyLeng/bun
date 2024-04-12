@@ -82,7 +82,11 @@ func (q *RawQuery) scanOrExec(
 	var res sql.Result
 
 	if q.IsSP {
-		res, err = q.scanSp(ctx, q, q.query, q.args, model, hasDest)
+		if hasDest {
+			res, err = q.scanSp(ctx, q, q.query, q.args, model, hasDest)
+		} else {
+			res, err = q.execSp(ctx, q, q.query, q.args)
+		}		
 	} else {
 		query := q.db.format(q.query, q.args)
 		if hasDest {

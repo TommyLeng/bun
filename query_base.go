@@ -581,7 +581,6 @@ func (q *baseQuery) scan(
 	return res, err
 }
 
-
 func (q *baseQuery) scanSp(
 	ctx context.Context,
 	iquery Query,
@@ -590,7 +589,7 @@ func (q *baseQuery) scanSp(
 	model Model,
 	hasDest bool,
 ) (sql.Result, error) {
-	ctx, event := q.db.beforeQuery(ctx, iquery, query, nil, query, q.model)
+	ctx, event := q.db.beforeQuery(ctx, iquery, query, args, query, q.model)
 
 	rows, err := q.conn.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -615,6 +614,17 @@ func (q *baseQuery) scanSp(
 	return res, err
 }
 
+func (q *baseQuery) execSp(
+	ctx context.Context,
+	iquery Query,
+	query string,
+	args []interface{},
+) (sql.Result, error) {
+	ctx, event := q.db.beforeQuery(ctx, iquery, query, args, query, q.model)
+	res, err := q.conn.ExecContext(ctx, query, args...)
+	q.db.afterQuery(ctx, event, nil, err)
+	return res, err
+}
 
 func (q *baseQuery) exec(
 	ctx context.Context,
