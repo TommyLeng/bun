@@ -40,6 +40,10 @@ func (m *scanModel) ScanRows(ctx context.Context, rows *sql.Rows) (int, error) {
 		return 0, err
 	}
 
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+
 	return 1, nil
 }
 
