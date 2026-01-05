@@ -189,6 +189,18 @@ func (q *baseQuery) getModel(dest []interface{}) (Model, error) {
 	return nil, errNilModel
 }
 
+func (q *baseQuery) getModels(dest []interface{}) ([]Model, error) {
+	models := make([]Model, len(dest))
+	for i, d := range dest {
+		m, err := newSingleModel(q.db, d)
+		if err != nil {
+			return nil, err
+		}
+		models[i] = m
+	}
+	return models, nil
+}
+
 func (q *baseQuery) beforeAppendModel(ctx context.Context, query Query) error {
 	if q.tableModel != nil {
 		return q.tableModel.BeforeAppendModel(ctx, query)
@@ -604,6 +616,11 @@ func (q *baseQuery) scanSp(
 		return nil, err
 	}
 
+	if err := rows.Err(); err != nil {
+		q.db.afterQuery(ctx, event, nil, err)
+		return nil, err
+	}
+
 	if numRow == 0 && hasDest && isSingleRowModel(model) {
 		err = sql.ErrNoRows
 	}
@@ -612,6 +629,62 @@ func (q *baseQuery) scanSp(
 	q.db.afterQuery(ctx, event, res, err)
 
 	return res, err
+}
+
+func (q *baseQuery) scanSpMulti(
+	ctx context.Context,
+	iquery Query,
+	query string,
+	args []interface{},
+	models []Model,
+	hasDest bool,
+) (sql.Result, error) {
+	ctx, event := q.db.beforeQuery(ctx, iquery, query, args, query, q.model)
+
+	rows, err := q.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		q.db.afterQuery(ctx, event, nil, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var totalRows int
+
+	for i, model := range models {
+		if i > 0 {
+			if !rows.NextResultSet() {
+				if err := rows.Err(); err != nil {
+					q.db.afterQuery(ctx, event, nil, err)
+					return nil, err
+				}
+				break // SP returned fewer result sets than expected, that's ok
+			}
+		}
+
+		numRow, err := model.ScanRows(ctx, rows)
+		if err != nil {
+			q.db.afterQuery(ctx, event, nil, err)
+			return nil, err
+		}
+
+		if numRow == 0 && hasDest && isSingleRowModel(model) {
+			err = sql.ErrNoRows
+			q.db.afterQuery(ctx, event, nil, err)
+			return nil, err
+		}
+
+		totalRows += numRow
+	}
+
+	if err := rows.Err(); err != nil {
+		q.db.afterQuery(ctx, event, nil, err)
+		return nil, err
+	}
+
+	res := driver.RowsAffected(totalRows)
+	q.db.afterQuery(ctx, event, res, nil)
+
+	return res, nil
 }
 
 func (q *baseQuery) execSp(

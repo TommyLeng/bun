@@ -13,6 +13,7 @@ type RawQuery struct {
 	query string
 	args  []interface{}
 	IsSP  bool
+	IsSPM bool // SP with multiple result sets
 }
 
 // Deprecated: Use NewRaw instead. When add it to IDB, it conflicts with the sql.Conn#Raw
@@ -53,6 +54,12 @@ func (q *RawQuery) SetSP() *RawQuery {
 	return q
 }
 
+// SetSPM sets the query as a stored procedure with multiple result sets.
+func (q *RawQuery) SetSPM() *RawQuery {
+	q.IsSPM = true
+	return q
+}
+
 func (q *RawQuery) Exec(ctx context.Context, dest ...interface{}) (sql.Result, error) {
 	return q.scanOrExec(ctx, dest, len(dest) > 0)
 }
@@ -69,38 +76,41 @@ func (q *RawQuery) scanOrExec(
 		return nil, q.err
 	}
 
-	var model Model
-	var err error
+	// Case 1: No destination - just execute (no scan needed)
+	if !hasDest {
+		if q.IsSP || q.IsSPM {
+			return q.execSp(ctx, q, q.query, q.args)
+		}
+		query := q.db.format(q.query, q.args)
+		return q.exec(ctx, q, query)
+	}
 
-	if hasDest {
-		model, err = q.getModel(dest)
+	// Case 2: Has destination - need to scan results
+	if q.IsSPM {
+		// SP with multiple result sets
+		models, err := q.getModels(dest)
 		if err != nil {
 			return nil, err
 		}
+		return q.scanSpMulti(ctx, q, q.query, q.args, models, hasDest)
 	}
-
-	var res sql.Result
 
 	if q.IsSP {
-		if hasDest {
-			res, err = q.scanSp(ctx, q, q.query, q.args, model, hasDest)
-		} else {
-			res, err = q.execSp(ctx, q, q.query, q.args)
-		}		
-	} else {
-		query := q.db.format(q.query, q.args)
-		if hasDest {
-			res, err = q.scan(ctx, q, query, model, hasDest)
-		} else {
-			res, err = q.exec(ctx, q, query)
+		// SP with single result set
+		model, err := q.getModel(dest)
+		if err != nil {
+			return nil, err
 		}
+		return q.scanSp(ctx, q, q.query, q.args, model, hasDest)
 	}
 
+	// Normal query
+	model, err := q.getModel(dest)
 	if err != nil {
 		return nil, err
 	}
-
-	return res, nil
+	query := q.db.format(q.query, q.args)
+	return q.scan(ctx, q, query, model, hasDest)
 }
 
 func (q *RawQuery) AppendQuery(fmter schema.Formatter, b []byte) ([]byte, error) {
