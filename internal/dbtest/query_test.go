@@ -986,6 +986,19 @@ func TestQuery(t *testing.T) {
 			// Non-positive VARCHAR length is illegal
 			return db.NewCreateTable().Model((*Model)(nil)).Varchar(-20)
 		},
+		func(db *bun.DB) schema.QueryAppender {
+			return db.NewSelect().Model(new(Model)).Option("QUERYTRACEON 9481")
+		},
+		func(db *bun.DB) schema.QueryAppender {
+			return db.NewSelect().Model(new(Model)).
+				Where("id = ?", 1).
+				Option("RECOMPILE")
+		},
+		func(db *bun.DB) schema.QueryAppender {
+			return db.NewSelect().Model(new(Model)).
+				Where("id = ?", 1).
+				Option("QUERYTRACEON ?, RECOMPILE", 9481)
+		},
 	}
 
 	timeRE := regexp.MustCompile(`'2\d{3}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?(\+\d{2}:\d{2})?'`)

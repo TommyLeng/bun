@@ -34,6 +34,7 @@ type SelectQuery struct {
 	limit      int32
 	offset     int32
 	selFor     schema.QueryWithArgs
+	option     schema.QueryWithArgs
 
 	union []union
 }
@@ -324,6 +325,21 @@ func (q *SelectQuery) Offset(n int) *SelectQuery {
 
 func (q *SelectQuery) For(s string, args ...interface{}) *SelectQuery {
 	q.selFor = schema.SafeQuery(s, args)
+	return q
+}
+
+// Option adds an OPTION clause to the query.
+// This is primarily used for SQL Server query hints like QUERYTRACEON, RECOMPILE, etc.
+//
+// Example:
+//
+//	db.NewSelect().
+//	    Table("users").
+//	    Option("QUERYTRACEON 9481")
+//
+// Output: SELECT * FROM users OPTION (QUERYTRACEON 9481)
+func (q *SelectQuery) Option(s string, args ...interface{}) *SelectQuery {
+	q.option = schema.SafeQuery(s, args)
 	return q
 }
 
@@ -662,6 +678,15 @@ func (q *SelectQuery) appendQuery(
 			}
 			b = append(b, ')')
 		}
+	}
+
+	if !q.option.IsZero() {
+		b = append(b, " OPTION ("...)
+		b, err = q.option.AppendQuery(fmter, b)
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, ')')
 	}
 
 	if cteCount {
